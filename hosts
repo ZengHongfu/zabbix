@@ -1,0 +1,3 @@
+[vm]
+10.113.43.140	name=acmp_140	zabbix_server=10.113.14.243	ansible_ssh_pass=Admin
+10.113.43.152	name=acmp_152	zabbix_server=10.113.14.243	ansible_ssh_pass=Admin

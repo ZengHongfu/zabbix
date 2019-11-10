@@ -1,0 +1,35 @@
+---
+- hosts: vm
+  remote_user: root
+  tasks:
+    - name: Create data directory
+      file: path=/root/zabbix state=directory owner=root group=root
+
+    - name: cp zabbix_ageent_rpm to host
+      copy: src=./zabbix-agent-4.2.1-1.el7.x86_64.rpm dest=/root/zabbix/ owner=root group=root mode=0555
+
+    - name: install zabbix-agent
+      yum: name=/root/zabbix/zabbix-agent-4.2.1-1.el7.x86_64.rpm state=present
+
+    - name: cp zabbix_base_script to host
+      copy: src=./cloud.conf dest=/etc/zabbix/zabbix_agentd.d/ owner=root group=root mode=0644
+
+    - name: cp zabbix_scripts to host
+      copy: src=./scripts dest=/root/zabbix/ owner=root group=root mode=0555
+
+    - name: midify_agent_config -->Server
+      shell: sed -n '/^Server=/p' /etc/zabbix/zabbix_agentd.conf | xargs -i sed -i 's/^{}/Server={{zabbix_server}}/g' /etc/zabbix/zabbix_agentd.conf
+    - name: midify_agent_config -->ServerActive
+      shell: sed -n '/^ServerActive=/p' /etc/zabbix/zabbix_agentd.conf | xargs -i sed -i 's/^{}/ServerActive={{zabbix_server}}/g' /etc/zabbix/zabbix_agentd.conf
+    - name: midify_agent_config -->Hostname
+      shell: sed -n '/^Hostname=/p' /etc/zabbix/zabbix_agentd.conf | xargs -i sed -i 's/^{}/Hostname={{name}}/g' /etc/zabbix/zabbix_agentd.conf
+
+    - name: open port 10050
+      shell: iptables -A INPUT -p tcp --dport 10050 -j ACCEPT
+
+    - name: restart zabbix-agent
+      service: name=zabbix-agent state=restarted
+
+    - name: set zabbix-agent start when boot
+      shell: chkconfig zabbix-agent on
+
